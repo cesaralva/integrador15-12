@@ -1,0 +1,141 @@
+﻿@page
+@model WebApp.Pages.reciboModel
+@{
+}
+<div id="app">
+    <h1>Gestion de recibos</h1>
+    <p>Este modulo permitira actualizar los datos de los recibos.</p>
+ 
+    <form>
+          <div class="mb-3 row">
+            <label class="col-sm-2 col-form-label">Año</label>
+            <div class="col-sm-3">
+              <input type="number"  class="form-control" v-model="annio">
+            </div>
+
+            <label class="col-sm-1 col-form-label">Mes</label>
+            <div class="col-sm-3">
+                <select class="form-control" v-model="mes">
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+            </div>
+
+            <div class="col-sm-3">
+                <button @@click="fetchRecibos()" type="button" class="btn btn-primary">Consultar</button>
+            </div>
+          </div>
+    </form>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Departamento</th>
+                <th>Usuario</th>
+                <th>Total</th>
+                <th>Fecha Vencimiento</th>
+                <th>Estado</th>
+                <th>Ver Gasto</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="item in recibos">
+                <td>{{item.torre +''+item.numero}}</td>
+                <td>{{item.nombres + ' '+ item.apellidos}}</td>
+                <td>{{item.montopago}}</td>
+                <td>{{item.fechavencimiento.substring(0,10)}}</td>
+                <td>{{item.estadopago}}</td>
+                <td>
+                    <button @@click="fetchVerDetalkeRecibo(item)" type="button" class="btn btn-info">Ver</button>
+                </td>
+            </tr>
+            <tr v-if="recibos.length == 0">
+                <td colspan="6" class="text-center">No hay datos</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="modal" tabindex="-1" id="mdDetalle">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalle Recibo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" v-if="recibo">
+                    <h4>Recibo Nro: {{recibo.idRecibo}}</h4>
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Gasto</th>
+                                <th>Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in detallesGastos">
+                                <td>{{item.id}}</td>
+                                <td>{{item.concepto}}</td>
+                                <td>{{item.monto}}</td>
+                            </tr>
+                            <tr v-if="detallesGastos.length == 0">
+                                <td colspan="3" class="text-center">No hay datos</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.13/dist/vue.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/0.6.1/vue-resource.min.js" integrity="sha512-NuUIe6TWdEivPTcxnihx2e6r2xQFEFPrJfpdZWoBwZF6G51Rphcf5r/1ZU/ytj4lyHwLd/YGMix4a5LqAN15XA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+    new Vue({
+        el: "#app",
+        data: {
+            recibos: [],
+            detallesGastos:[],
+            mes: 1,
+            annio:2022,
+            recibo:{
+                idRecibo:0
+            }
+        },
+        mounted: function () {
+        },
+        methods: {
+            fetchRecibos: function () {
+                var url = "http://localhost:5039/api/Reciboes/listadoRecibos?annio=" + this.annio + "&mes=" + this.mes;
+                this.$http.get(url).then(function (response) {
+                    this.recibos = response.data;
+                });
+            },
+            fetchVerDetalkeRecibo: function (item) {
+                this.recibo = item;
+                var url = "http://localhost:5039/api/Recibosdetalles/ListaDetalleGasto?idRecibo=" + this.recibo.idRecibo;
+                this.$http.get(url).then(function (response) {
+                    this.detallesGastos = response.data;
+                    $("#mdDetalle").modal("show");
+                });
+            }
+        }
+    })
+
+</script>

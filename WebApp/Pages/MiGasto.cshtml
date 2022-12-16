@@ -1,0 +1,154 @@
+﻿@page
+@model WebApp.Pages.MiGastoModel
+@{
+}
+
+<div id="app">
+    <h1>Gestion de Gasto</h1>
+    <p>Este modulo permitira revisar los datos del gasto del recibo.</p>
+
+    <form>
+        <div class="mb-3 row">
+            <label class="col-sm-1 col-form-label">Departamento</label>
+            <div class="col-sm-2">
+                <select class="form-control" v-model="idDepart">
+                    <option value="0">:::Seleccione:::</option>
+                    <option v-for="item in departamentos" v-bind:value="item.id">Torre {{item.torre}} - Piso N.{{item.piso}}</option>
+                </select>
+            </div>
+
+            <label class="col-sm-1 col-form-label">Año</label>
+            <div class="col-sm-2">
+                <input type="number" class="form-control" v-model="annio">
+            </div>
+
+            <label class="col-sm-1 col-form-label">Mes</label>
+            <div class="col-sm-2">
+                <select class="form-control" v-model="mes">
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+            </div>
+
+            <div class="col-sm-2">
+                <button @@click="fetchGastos()" type="button" class="btn btn-primary">Consultar</button>
+            </div>
+        </div>
+        <div class="mb-3 row" v-if="gastos.length > 0">
+            <h5>Propietario: {{usuario.nombres }} {{usuario.apellidos}}</h5>
+            <table class="table table-bordered">
+                <tr class="bg-primary">
+                    <td class="text-white">Concepto</td>
+                    <td class="text-white">Monto</td>
+                </tr>
+                <tr v-for="item in gastos">
+                    <td>{{item.concepto}}</td>
+                    <td>{{item.monto}}</td>
+                </tr>
+                <tr>
+                    <td>Total:</td>
+                    <td class="bg-success text-white">{{total}}</td>
+                </tr>
+            </table>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="button" @@click="fetchPagarRecibo()" class="btn btn-success btn-sm me-md-2">Pagar Voucher</button>
+            </div>
+        </div>
+
+        <div class="mb-3 row" v-if="gastos.length == 0">
+            <h5>No hay resultados de gastos a mostrar</h5>
+        </div>
+    </form>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.13/dist/vue.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/0.6.1/vue-resource.min.js" integrity="sha512-NuUIe6TWdEivPTcxnihx2e6r2xQFEFPrJfpdZWoBwZF6G51Rphcf5r/1ZU/ytj4lyHwLd/YGMix4a5LqAN15XA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+    new Vue({
+        el: "#app",
+        data: {
+            departamentos:[],
+            mes: 1,
+            annio: 2022,
+            idDepart:0,
+            recibo: {
+                idRecibo: 0
+            },
+            gastos:[],
+            usuario:{},
+            total: 0
+        },
+        mounted: function () {
+            this.ftchObtenerUsuario();
+            this.fetchDepartamentos();
+        },
+        methods: {
+            fetchRecibo: function () {
+                var url = "http://localhost:5039/api/Reciboes/listadoRecibos?annio=" + this.annio + "&mes=" + this.mes;
+                this.$http.get(url).then(function (response) {
+                    this.recibos = response.data;
+                });
+            },
+            fetchDepartamentos: function () {
+                var url = "http://localhost:5039/api/Departamentoes/buscarDepPorUsuario?idUsuario=" + this.usuario.id;
+                this.$http.get(url).then(function (response) {
+                    this.departamentos = response.data;
+                 
+                });
+            },
+            ftchObtenerUsuario: function(){
+                this.usuario = JSON.parse(localStorage.getItem('usuario'));
+     
+            }, 
+            fetchGastos: function () {
+                if (this.idDepart == 0) {
+                    alert('Debe seleccionar un departamento');
+                    return;
+                 }
+
+
+                var url = "http://localhost:5039/api/Gastoes/buscarGastoPorUsuario?idDepart="
+                    + this.idDepart + "&annio=" + this.annio+"&mes="+this.mes;
+                this.$http.get(url).then(function (response) {
+                    this.gastos = response.data;
+                    this.total = 0;
+                    for(var i = 0;i <  this.gastos.length;i++){
+                        const item = this.gastos[i];
+                        this.total+= item.monto;
+                    }
+                });
+            },
+            fetchPagarRecibo: function () {
+
+                var idRecibo = this.gastos[0].idRecibo;
+
+                var url = "http://localhost:5039/api/Gastoes/pagarGasto?idRecibo="+idRecibo
+                this.$http.get(url).then(function (response) {
+                    debugger
+                    var msg = response.data;
+                    if(msg == "OK"){
+                        this.fetchGastos();
+                        alert('El recibo se proceso de forma correcta.Estara en espera por parte de validacion.');
+                    }else{
+                        alert(msg);
+                    }
+                });
+            }
+        }
+    })
+
+</script>

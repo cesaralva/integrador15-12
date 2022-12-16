@@ -1,0 +1,301 @@
+﻿@page
+@model WebApp.Pages.UsuarioModel
+@{
+}
+
+
+
+
+<div id="app">
+    <h1>Gestion de usuario</h1>
+    <p>Este modulo permitira actualizar los datos de los usuario.</p>
+    <p>
+        Nombres
+        <input v-model="fnombres" v-on:keyup.enter="buscar" placeholder="por dni,email" />
+        <button @@click="buscar" class="btn btn-primary">Buscar</button>
+      
+        <button @@click="nuevo" class="btn btn-primary text-right">Nuevo</button>
+    </p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Apellidos</th>
+                <th>Nombres</th>
+                <th>Dni</th>
+                <th>Email</th>
+                <th>Telefono</th>
+                <th>Rol</th>
+                <th>departamento</th>
+                <th>Mantenimiento</th>
+
+
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="item in usuarios">
+                <td>{{item.apellidos}}</td>
+                <td>{{item.nombres}}</td>
+                <td>{{item.dni}}</td>
+                <td>{{item.email}}</td>
+                <td>{{item.telefono}}</td>
+                <td v-for="roles in tiposroles" :value="roles.id" v-if="roles.id==item.idrol">{{roles.descripcionrol}}   </td>
+                <td v-for="departamentos in tiposdepartamentos" :value="departamentos.id" v-if="departamentos.id==item.iddepartamento">{{departamentos.descripcion}}</td>
+                <td  v-if="item.iddepartamento==null"> no </td>
+                <td>
+                    <button class="btn btn-primary" @@click="editar(item.id)">Editar</button>
+                    <button class="btn btn-danger" @@click="eliminar(item.id)">Eliminar</button>
+                </td>
+
+            </tr>
+        </tbody>
+    </table>
+    <div class="modal" tabindex="-1" id="mdlUsuario">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Usuarios</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <tr>  
+                            <td>Apellidos   </td>
+                            <td><input v-model="usuario.apellidos" />  </td>
+                        </tr>
+                        <tr>
+                            <td>nombres   </td>
+                            <td><input v-model="usuario.nombres" /> </td>
+                        </tr>
+
+                        <tr>
+                            <td>Dni   </td>
+                            <td><input v-model="usuario.dni" minlength="8" maxlength="8" onkeypress="return valideKey(event);" required /></td>
+                        </tr>
+                        <tr>
+                            <td>email</td>
+                            <td><input  requeried type="email" v-model="usuario.email"  placeholder="Correo electrónico" /></td>
+                            
+                        </tr>
+                        <tr>
+                            <td>telefono</td>
+                            <td><input v-model="usuario.telefono" minlength="9" maxlength="9" onkeypress="return valideKey(event);" required /></td>
+                        </tr>
+                        <tr>
+                            <td>clave</td>
+                            <td><input v-model="usuario.clave" type="password" /></td>
+                        </tr>
+                          <tr>
+                      
+                            <td>rol</td>
+                            <td>
+                                <select v-model="usuario.idrol" onchange="mostardepartamento(this.value)">
+                                    <option v-for="item in tiposroles" :value="item.id">{{item.descripcionrol}}</option>
+                                </select>
+                            </td>
+                          
+                        </tr>
+   
+                        <tr>
+                         
+                            <td>
+                                <label id="lbldepartamento"   style="display:none"  > departamento </label>
+                            </td>
+                            <td>
+                                <select v-model="usuario.iddepartamento" style="display:none" name="selectdepartamento" id="inputdepartamento">
+                                    <option v-for="item in tiposdepartamentos" :value="item.id">{{item.descripcion}}</option>
+                                </select>
+                            </td>
+                            
+                         </tr>
+                        
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @@click="registrar" v-if="usuario.id==0">Registrar</button>
+                    <button type="button" class="btn btn-primary" @@click="actualizar" v-if="usuario.id>0">Actualizar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+   
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.13/dist/vue.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/0.6.1/vue-resource.min.js" integrity="sha512-NuUIe6TWdEivPTcxnihx2e6r2xQFEFPrJfpdZWoBwZF6G51Rphcf5r/1ZU/ytj4lyHwLd/YGMix4a5LqAN15XA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+    new Vue({
+        el: "#app",
+        data: {
+            usuarios: [],
+            usuario:
+            {
+                id: 0,
+                apellidos: "",
+                nombres: "",
+                dni: "",
+                email: "",
+                telefono: "",
+                
+                clave: "",
+                estado: 1,
+                idrol:"",
+                iddepartamento:""
+                
+            },
+            fnombres: "",
+            paginacion: 20,
+            tiposroles:[],
+            tiposdepartamentos: [],
+            error:"",
+        },
+        mounted: function () {
+            this.fetchUsuarioslistar();
+          
+            this.fetchTiposRoles();
+            this.fetchTiposDepartamentos();
+        },
+        methods: {
+            fetchUsuarios: function () {
+                var url = "http://localhost:5039/api/Usuarios?fnombres="+this.fnombres;
+                this.$http.get(url).then(function (response) {
+                    this.usuarios = response.data;
+
+                });
+               
+            },
+            fetchUsuarioslistar: function () {
+                var url = "http://localhost:5039/api/Usuarios/listar";
+                this.$http.get(url).then(function (response) {
+                    this.usuarios = response.data;
+
+                });
+               
+            },
+            fetchTiposRoles: function () {
+                var url = "http://localhost:5039/api/Roles";
+                this.$http.get(url).then(function (response) {
+                    this.tiposroles = response.data;
+                });
+            },
+            fetchTiposDepartamentos: function () {
+                var url = "http://localhost:5039/api/Departamentoes";
+                this.$http.get(url).then(function (response) {
+                    this.tiposdepartamentos = response.data;
+                });
+            },
+          
+            buscar: function () {
+
+                if(this.fnombres==""){
+                    this.fetchUsuarioslistar();
+
+                }else{
+                     this.fetchUsuarios();
+                }
+                
+
+            },
+
+            nuevo: function () {
+                this.usuario.id = 0,
+                this.usuario.apellidos = "";
+                this.usuario.nombres = "";
+                this.usuario.dni = "";
+                this.usuario.email = "";
+                this.usuario.telefono = "";
+                
+                this.usuario.clave = "";
+                this.usuario.estado = 1;
+                this.usuario.idrol = "";
+                this.usuario.iddepartamento= "";
+                $('#mdlUsuario').modal('show');
+            },
+            registrar: function () {
+                var url = "http://localhost:5039/api/Usuarios";
+
+                if (this.usuario.idrol == 1) {
+                    this.usuario.iddepartamento = null;
+                }
+
+                this.$http.post(url, this.usuario).then(function (response) {        
+                    console.log(response)
+                    if(response.data.email === this.usuario.email && this.usuario.nombres != response.data.nombres){
+                        alert('el correo no esta disponible')
+                    }else{
+                        $('#mdlUsuario').modal('hide');
+                    }
+                    this.fetchUsuarioslistar();
+
+                });
+             
+            },
+            editar: function (id) {
+                var url = "http://localhost:5039/api/Usuarios/" + id;
+                this.$http.get(url).then(function (response) {
+                    this.usuario = response.data;
+                    $('#mdlUsuario').modal('show');
+                });
+            },
+            actualizar: function () {
+                var url = "http://localhost:5039/api/Usuarios/" + this.usuario.id;
+                if (this.usuario.idrol == 1) {
+                    this.usuario.iddepartamento = null;
+                }
+                this.$http.put(url, this.usuario).then(function (response) {
+                    this.fetchUsuarioslistar();
+                    $('#mdlUsuario').modal('hide');
+                });
+            },
+            eliminar: function (id) {
+                
+                
+                var url = "http://localhost:5039/api/Usuarios/" + id;
+                this.$http.delete(url).then(function (response) {
+                    this.fetchUsuarioslistar();
+
+                });
+            },
+             onSubmit(event) {
+      event.preventDefault()
+      console.log(event)
+    },
+   
+  
+            coincide: function (correo){
+                var url = "http://localhost:5039/api/Usuarios/busqueda" + correo;
+                this.$http.get(url).then(function (response) {
+                    console.log(response)
+                });
+            }
+        }
+    })
+    function mostardepartamento(rol){
+    if(rol==1){
+        document.getElementById("inputdepartamento").style.display='none';
+        document.getElementById("lbldepartamento").style.display = 'none';
+    }else{
+        document.getElementById("inputdepartamento").style.display = 'block';
+        document.getElementById("lbldepartamento").style.display = 'block';
+            
+    }
+    }
+    function valideKey(evt) {
+
+        // code is the decimal ASCII representation of the pressed key.
+        var code = (evt.which) ? evt.which : evt.keyCode;
+
+        if (code == 8) { // backspace.
+            return true;
+        } else if (code >= 48 && code <= 57) { // is a number.
+            return true;
+        } else { // other keys.
+            return false;
+        }
+    }
+ 
+
+</script>

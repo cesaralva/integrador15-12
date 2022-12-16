@@ -1,0 +1,49 @@
+﻿@page
+@model WebAppcondominio.Pages.EdificioModel
+@{
+}
+<div id="app">
+    <h1>Gestion de Edificios</h1>
+    <p>Este modulo permitira actualizar los datos de los Edificios.</p>
+    <p><button @@click="fetchEdificios">Listar Edificios</button></p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Torre</th>
+                <th>Piso</th>
+                <th>Numero</th>
+                <th>Descripcion</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="item in Edificio">
+                <td>{{item.Torre}}</td>
+                <td>{{item.piso}}</td>
+                <td>{{item.numero}}</td>
+                <td>{{item.descripcion}}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.13/dist/vue.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/0.6.1/vue-resource.min.js" integrity="sha512-NuUIe6TWdEivPTcxnihx2e6r2xQFEFPrJfpdZWoBwZF6G51Rphcf5r/1ZU/ytj4lyHwLd/YGMix4a5LqAN15XA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+    new Vue({
+        el: "#app",
+        data: {
+            Edificio: []
+        },
+        methods: {
+            fetchEdificios: function () {
+                var url = "http://localhost:5022/api/Edificios";
+                this.$http.get(url).then(function (response) {
+                    this.Edificio= response.data;
+                })
+            }
+
+        }
+    })
+
+</script>

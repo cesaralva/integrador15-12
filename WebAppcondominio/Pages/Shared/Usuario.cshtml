@@ -1,0 +1,162 @@
+﻿@page
+@model WebAppcondominio.Pages.Shared.UsuarioModel
+@{
+}
+<div id="app">
+    <h1>Gestion de usuario</h1>
+    <p>Este modulo permitira actualizar los datos de los usuario.</p>
+    <p>
+        Nombres
+        <input v-model="fnombres" />
+        <button @@click="buscar" class="btn btn-primary">Buscar</button>
+        <button @@click="nuevo" class="btn btn-primary text-right">Nuevo</button>
+    </p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Apellidos</th>
+                <th>Nombres</th>
+                <th>Dni</th>
+                <th>Email</th>
+                <th>Telefono</th>
+                <th>Editar</th>
+
+
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="item in usuarios">
+                <td>{{item.apellidos}}</td>
+                <td>{{item.nombres}}</td>
+                <td>{{item.dni}}</td>
+                <td>{{item.email}}</td>
+                <td>{{item.telefono}}</td>
+                <td>
+                    <button class="btn btn-primary" @@click="editar(item.id)">Editar</button>
+                    <button class="btn btn-danger" @@click="eliminar(item.id)">Eliminar</button>
+                </td>
+
+            </tr>
+        </tbody>
+    </table>
+    <div class="modal" tabindex="-1" id="mdlUsuario">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Usuarios</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <p>apellidos<input v-model="usuario.apellidos" /></p>
+                    <p>nombres <input v-model="usuario.nombres" /></p>
+                    <p>dni<input v-model="usuario.dni" /></p>
+                    <p>email<input v-model="usuario.email" /></p>
+                    <p>telefono<input v-model="usuario.telefono" /></p>
+                    <p>usuario<input v-model="usuario.usuario" /></p>
+                    <p>clave<input v-model="usuario.clave" /></p>
+
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @@click="registrar" v-if="usuario.id==0">Registrar</button>
+                    <button type="button" class="btn btn-primary" @@click="actualizar" v-if="usuario.id>0">Actualizar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.13/dist/vue.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/0.6.1/vue-resource.min.js" integrity="sha512-NuUIe6TWdEivPTcxnihx2e6r2xQFEFPrJfpdZWoBwZF6G51Rphcf5r/1ZU/ytj4lyHwLd/YGMix4a5LqAN15XA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+    new Vue({
+        el: "#app",
+        data: {
+            usuarios: [],
+            usuario:
+            {
+                id: 0,
+                apellidos: "",
+                nombres: "",
+                dni: "",
+                email: "",
+                telefono: "",
+                usuario: "",
+                clave: "",
+                estado: 1,
+            },
+            fnombres: "",
+            paginacion: 20,
+
+        },
+        mounted: function () {
+            this.fetchUsuarios();
+        },
+        methods: {
+            fetchUsuarios: function () {
+                var url = "http://localhost:5022/api/Usuarios?fnombres=" + this.fnombres;
+                this.$http.get(url).then(function (response) {
+                    this.usuarios = response.data;
+
+                });
+            },
+            fetchTiposDocumento: function () {
+                var url = "http://localhost:5022/api/Usuarios";
+                this.$http.get(url).then(function (response) {
+                    this.usuarios = response.data;
+                });
+            },
+            buscar: function () {
+                this.fetchUsuarios();
+
+            },
+
+            nuevo: function () {
+                this.usuario.id = 0,
+                    this.usuario.apellidos = "";
+                this.usuario.nombres = "";
+                this.usuario.dni = "";
+                this.usuario.email = "";
+                this.usuario.telefono = "";
+                this.usuario.usuario = "";
+                this.usuario.clave = "";
+                this.usuario.estado = 1;
+                $('#mdlUsuario').modal('show');
+            },
+            registrar: function () {
+                var url = "http://localhost:5022/api/Usuarios";
+                this.$http.post(url, this.usuario).then(function (response) {
+                    this.fetchUsuarios();
+                    $('#mdlUsuario').modal('hide');
+                });
+            },
+            editar: function (id) {
+                var url = "http://localhost:5022/api/Usuarios/" + id;
+                this.$http.get(url).then(function (response) {
+                    this.usuario = response.data;
+                    $('#mdlUsuario').modal('show');
+                });
+            },
+            actualizar: function () {
+                var url = "http://localhost:5022/api/Usuarios/" + this.usuario.id;
+                this.$http.put(url, this.usuario).then(function (response) {
+                    this.fetchUsuarios();
+                    $('#mdlUsuario').modal('hide');
+                });
+            },
+            eliminar: function (id) {
+                var url = "http://localhost:5022/api/Usuarios/" + id;
+                this.$http.delete(url).then(function (response) {
+                    this.fetchUsuarios();
+
+                });
+            }
+        }
+    })
+
+</script>

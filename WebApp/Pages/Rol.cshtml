@@ -1,0 +1,160 @@
+﻿@page
+@model WebApp.Pages.RolModel
+@{
+}
+<div id="app">
+    <h1>Gestion de rol</h1>
+    <p>Este modulo permitira actualizar los datos de los rol.</p>
+    <p>
+    
+        <button @@click="nuevo" class="btn btn-primary text-right">Nuevo</button>
+    </p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Descripcion</th>
+                <th>Editar</th>
+
+
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="item in roles">
+                <td>{{item.descripcionrol}}</td>
+               
+                <td>
+                    <button class="btn btn-primary" @@click="editar(item.id)">Editar</button>
+                    <button class="btn btn-danger" @@click="eliminar(item.id)">Eliminar</button>
+                </td>
+
+            </tr>
+        </tbody>
+    </table>
+    <div class="modal" tabindex="-1" id="mdlRole">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Roles</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <p>descripcion<input v-model="role.descripcionrol" /></p>
+                
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @@click="registrar" v-if="role.id==0">Registrar</button>
+                    <button type="button" class="btn btn-primary" @@click="actualizar" v-if="role.id>0">Actualizar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.13/dist/vue.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/0.6.1/vue-resource.min.js" integrity="sha512-NuUIe6TWdEivPTcxnihx2e6r2xQFEFPrJfpdZWoBwZF6G51Rphcf5r/1ZU/ytj4lyHwLd/YGMix4a5LqAN15XA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+    new Vue({
+        el: "#app",
+        data: {
+            roles: [],
+            role:
+            {
+                id: 0,
+                descripcionrol: " ",
+                
+            },
+            fnombres: "",
+            paginacion: 20,
+            usuarios: [],
+        },
+        mounted: function () {
+            this.fetchRoles();
+        },
+        methods: {
+            fetchRoles: function () {
+                var url = "http://localhost:5039/api/Roles";
+                this.$http.get(url).then(function (response) {
+                    this.roles = response.data;
+
+                });
+            },
+           
+          
+            buscar: function () {
+                this.fetchRoles();
+
+            },
+
+            nuevo: function () {
+                this.role.id = 0,
+                this.role.descripcionrol = "";
+            
+                
+                $('#mdlRole').modal('show');
+            },
+            registrar: function () {
+                var url = "http://localhost:5039/api/Roles";
+                this.$http.post(url, this.role).then(function (response) {
+                    this.fetchRoles();
+                    $('#mdlRole').modal('hide');
+                });
+            },
+            editar: function (id) {
+                var url = "http://localhost:5039/api/Roles/" + id;
+                this.$http.get(url).then(function (response) {
+                    this.role= response.data;
+                    $('#mdlRole').modal('show');
+                });
+            },
+            actualizar: function () {
+                var url = "http://localhost:5039/api/Roles/" + this.role.id;
+                this.$http.put(url, this.role).then(function (response) {
+                    this.fetchRoles();
+                    $('#mdlRole').modal('hide');
+                });
+            },
+            eliminar: function (id) {
+
+
+
+
+                var url = "http://localhost:5039/api/Usuarios/roles/" + id;
+               var estado=false;
+               
+               this.$http.get(url).then(function (response) {
+        this.usuarios = response.data;
+        if(this.usuarios.length>0){
+                        alert("no puede eliminar");
+                       }
+                        else{
+                        alert("si se puede registro eliminado");
+                        estado=true;
+
+                        var url = "http://localhost:5039/api/Roles/" + id;
+                        this.$http.delete(url).then(function (response) {
+                            this.fetchRoles();
+
+                        });
+
+
+
+        }
+                    
+                });
+             
+
+
+
+                
+        
+            
+         }       
+        }
+    })
+ 
+</script>

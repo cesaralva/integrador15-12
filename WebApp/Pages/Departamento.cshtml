@@ -1,0 +1,191 @@
+﻿@page
+@model WebApp.Pages.DepartamentoModel
+@{
+}
+<div id="app">
+    <h1>Gestion de Departamentos</h1>
+    <p>Este modulo permitira actualizar los datos de los departamentos.</p>
+    <p>
+
+        Descripcion
+        <input v-model="fdescripcion" v-on:keyup.enter="buscar" placeholder="Buscar por descripcion" />
+        <button @@click="buscar" class="btn btn-primary">Buscar</button>
+
+        <button @@click="nuevo" class="btn btn-primary text-right">Nuevo</button>
+    </p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>TORRE</th>
+                <th>PISO</th>
+                <th>NUMERO</th>
+                <th>DESCRIPCION</th>
+                <th>EDITAR</th>
+
+
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="item in departamentos">
+                <td>{{item.torre}}</td>
+                <td>{{item.piso}}</td>
+                <td>{{item.numero}}</td>
+                <td>{{item.descripcion}}</td>
+
+                <td>
+                    <button class="btn btn-primary" @@click="editar(item.id)">Editar</button>
+                    <button class="btn btn-danger" @@click="eliminar(item.id)">Eliminar</button>
+                </td>
+
+            </tr>
+        </tbody>
+    </table>
+    <div class="modal" tabindex="-1" id="mdlDepartamento">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Departamento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table>
+                        <tr>
+                            <td>TORRE:</td>
+                            <td><input v-model="departamento.torre" minlength="1" type="text" /></td>
+                        </tr>
+                        <tr>
+                            <td>PISO:</td>
+                            <td><input v-model="departamento.piso" minlength="1" maxlength="1" onkeypress="return valideKey(event);" required type="number" /></td>
+                        </tr>
+                        <tr>
+                            <td>NUMERO</td>
+                            <td><input v-model="departamento.numero" minlength="3" maxlength="4" onkeypress="return valideKey(event);" required type="number" /></td>
+                        </tr>
+                        <tr>
+                            <td>DESCRIPCION</td>
+                            <td><input v-model="departamento.descripcion" /></td>
+                        </tr>
+
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @@click="registrar" v-if="departamento.id==0">Registrar</button>
+                    <button type="button" class="btn btn-primary" @@click="actualizar" v-if="departamento.id>0">Actualizar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.13/dist/vue.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/0.6.1/vue-resource.min.js" integrity="sha512-NuUIe6TWdEivPTcxnihx2e6r2xQFEFPrJfpdZWoBwZF6G51Rphcf5r/1ZU/ytj4lyHwLd/YGMix4a5LqAN15XA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+    new Vue({
+        el: "#app",
+        data: {
+            departamentos: [],
+            departamento:
+            {
+                id: 0,
+                torre: " ",
+                piso: " ",
+                numero: " ",
+                descripcion: " ",
+
+            },
+            fdescripcion: "",
+
+            paginacion: 20,
+
+        },
+        mounted: function () {
+            this.fetchDepartamentos();
+        },
+        methods: {
+            fetchDepartamentos: function () {
+                var url = "http://localhost:5039/api/Departamentoes";
+                this.$http.get(url).then(function (response) {
+                    this.departamentos = response.data;
+
+                });
+            },
+            fetchDepartamentoslistar: function () {
+                var url = "http://localhost:5039/api/Departamentoes/listar?fdescripcion=" + this.fdescripcion;
+                this.$http.get(url).then(function (response) {
+                    this.departamentos = response.data;
+
+                });
+
+            },
+            buscar: function () {
+
+                if (this.fdescripcion == "") {
+                    this.fetchDepartamentos();
+
+                } else {
+                    this.fetchDepartamentoslistar();
+                }
+
+
+            },
+
+
+            nuevo: function () {
+                this.departamento.id = 0,
+                this.departamento.torre = "";
+                this.departamento.piso = "";
+                this.departamento.numero = "";
+                this.departamento.descripciom = "";
+
+
+                $('#mdlDepartamento').modal('show');
+            },
+            registrar: function () {
+                var url = "http://localhost:5039/api/Departamentoes";
+                this.$http.post(url, this.departamento).then(function (response) {
+                    this.fetchDepartamentos();
+                    $('#mdlDepartamento').modal('hide');
+                });
+            },
+            editar: function (id) {
+                var url = "http://localhost:5039/api/Departamentoes/" + id;
+                this.$http.get(url).then(function (response) {
+                    this.departamento = response.data;
+                    $('#mdlDepartamento').modal('show');
+                });
+            },
+            actualizar: function () {
+                var url = "http://localhost:5039/api/Departamentoes/" + this.departamento.id;
+                this.$http.put(url, this.departamento).then(function (response) {
+                    this.fetchDepartamentos();
+                    $('#mdlDepartamento').modal('hide');
+                });
+            },
+            eliminar: function (id) {
+                var url = "http://localhost:5039/api/Departamentoes/" + id;
+                this.$http.delete(url).then(function (response) {
+                    this.fetchDepartamentos();
+
+                });
+            }
+        }
+    })
+    function valideKey(evt) {
+
+        // code is the decimal ASCII representation of the pressed key.
+        var code = (evt.which) ? evt.which : evt.keyCode;
+
+        if (code == 8) { // backspace.
+            return true;
+        } else if (code >= 48 && code <= 57) { // is a number.
+            return true;
+        } else { // other keys.
+            return false;
+        }
+    }
+</script>

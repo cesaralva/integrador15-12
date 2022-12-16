@@ -1,0 +1,169 @@
+﻿@page
+@model WebApp.Pages.IncidenteModel
+@{
+}
+<div id="app">
+    <h1>Gestion de incidente</h1>
+    <p>Este modulo permitira actualizar los datos de los incidente.</p>
+    <p>
+
+        <button @@click="nuevo" class="btn btn-primary text-right">Nuevo</button>
+    </p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Descripcion</th>
+                <th>Detalle</th> 
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Observación</th>
+                <th>Editar</th>
+               
+
+
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="item in incidentes">
+                <td>{{item.descripcion}}</td>
+                <td>{{item.detalle}}</td>
+                <td>{{item.fecha}}</td>
+                <td>{{item.estado}}</td>
+                <td>{{item.observacion}}</td>
+
+                <td>
+                    <button class="btn btn-primary" @@click="editar(item.id)">Editar</button>
+                    <button class="btn btn-danger" @@click="eliminar(item.id)">Eliminar</button>
+                </td>
+
+            </tr>
+        </tbody>
+    </table>
+    <div class="modal" tabindex="-1" id="mdlIncidente">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Incidente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <tr>
+                            <td>Descripcion   </td>
+                            <td><input v-model="incidente.descripcion" />  </td>
+                        </tr>
+                        <tr>
+                            <td>Detalle   </td>
+                            <td><input v-model="incidente.detalle" /> </td>
+                        </tr>
+
+                        <tr>
+                            <td>Fecha   </td>
+                            <td><input v-model="incidente.fecha" type="datetime" disabled /></td>
+                        </tr>
+                        <tr>
+                            <td>Estado   </td>
+                            <td><input v-model="incidente.estado" placeholder="Pendiente" disabled /></td>
+                        </tr>
+                         <tr>
+                            <td>Observacion   </td>
+                            <td><input v-model="incidente.observacion" disabled /></td>
+                        </tr>
+                            </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @@click="registrar" v-if="incidente.id==0">Registrar</button>
+                    <button type="button" class="btn btn-primary" @@click="actualizar" v-if="incidente.id>0">Actualizar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.13/dist/vue.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/0.6.1/vue-resource.min.js" integrity="sha512-NuUIe6TWdEivPTcxnihx2e6r2xQFEFPrJfpdZWoBwZF6G51Rphcf5r/1ZU/ytj4lyHwLd/YGMix4a5LqAN15XA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+    new Vue({
+        el: "#app",
+        data: {
+            incidentes: [],
+            incidente:
+            {
+                
+                id: 0,
+                descripcion: " ",
+                detalle: " ",
+                fecha: "",
+                estado: "Pendiente",
+               
+            },
+            fnombres: "",
+            paginacion: 20,
+
+        },
+        mounted: function () {
+            this.fetchIncidentes();
+        },
+        methods: {
+            fetchIncidentes: function () {
+                var url = "http://localhost:5039/api/Incidentes";
+                this.$http.get(url).then(function (response) {
+                    this.incidentes = response.data;
+
+                });
+            },
+
+
+            buscar: function () {
+                this.fetchIncidentes();
+
+            },
+
+            nuevo: function () {
+                var date = new Date();
+                this.incidente.id = 0,
+                this.incidente.descripcion = "";
+                this.incidente.detalle = "";
+                this.incidente.fecha = date;
+                this.incidente.estado = "Pendiente";
+                
+
+                $('#mdlIncidente').modal('show');
+            },
+            registrar: function () {
+                var url = "http://localhost:5039/api/Incidentes";
+                this.$http.post(url, this.incidente).then(function (response) {
+                    this.fetchIncidentes();
+                    $('#mdlIncidente').modal('hide');
+                });
+            },
+            editar: function (id) {
+                var url = "http://localhost:5039/api/Incidentes/" + id;
+                this.$http.get(url).then(function (response) {
+                    this.incidente = response.data;
+                    $('#mdlIncidente').modal('show');
+                });
+            },
+            actualizar: function () {
+                var url = "http://localhost:5039/api/Incidentes/" + this.incidente.id;
+                this.$http.put(url, this.incidente).then(function (response) {
+                    this.fetchIncidentes();
+                    $('#mdlIncidente').modal('hide');
+                });
+            },
+            eliminar: function (id) {
+                var url = "http://localhost:5039/api/Incidentes/" + id;
+                this.$http.delete(url).then(function (response) {
+                    this.fetchIncidentes();
+
+                });
+            }
+        }
+    })
+
+</script>

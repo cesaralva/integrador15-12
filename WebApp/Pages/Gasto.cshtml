@@ -1,0 +1,172 @@
+﻿@page
+@model WebApp.Pages.GastoModel
+@{
+}
+<div id="app">
+    <h1>Gestion de gastos</h1>
+    <p>Este modulo permitira actualizar los datos de los Gastos.</p>
+    <p>
+
+        <button @@click="nuevo" class="btn btn-primary text-right">Nuevo</button>
+    </p>
+
+    <table class="table">
+        <thead>
+            <tr>
+
+                <th>Concepto</th>
+                <th>Tipo </th>
+                <th>Monto</th>
+                <th>Estado</th>
+                <th>Editar</th>
+
+
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="item in gastos">
+
+
+                <td>{{item.concepto}}</td>
+                <td>{{item.tipoobligacion}}</td>
+                <td>{{item.monto}}</td>
+                <td>{{item.estado}}</td>
+
+
+                <td>
+                    <button class="btn btn-primary" @@click="editar(item.id)">Editar</button>
+                    <button class="btn btn-danger" @@click="eliminar(item.id)">Eliminar</button>
+                </td>
+
+            </tr>
+        </tbody>
+    </table>
+    <div class="modal" tabindex="-1" id="mdlGasto">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Obligaciones</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+
+                        <tr>
+                            <td>Concepto   </td>
+                            <td><input v-model="gasto.concepto" /> </td>
+                        </tr>
+                        <tr>
+                            <td>Tipo Obligacion   </td>
+                            <td>
+                                <select v-model="gasto.tipoobligacion" />
+                                <option value="Gastos Comunes">Gastos Comunes</option>
+                                <option value="Gastos No Comunes">Gastos No Comunes</option>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Monto  </td>
+                            <td><input v-model="gasto.monto" /></td>
+                        </tr>
+                        <tr>
+                            <td>Estado  </td>
+                            <td><input v-model="gasto.estado" /></td>
+                        </tr>
+
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @@click="registrar" v-if="gasto.id==0">Registrar</button>
+                    <button type="button" class="btn btn-primary" @@click="actualizar" v-if="gasto.id>0">Actualizar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.13/dist/vue.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/0.6.1/vue-resource.min.js" integrity="sha512-NuUIe6TWdEivPTcxnihx2e6r2xQFEFPrJfpdZWoBwZF6G51Rphcf5r/1ZU/ytj4lyHwLd/YGMix4a5LqAN15XA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+    new Vue({
+        el: "#app",
+        data: {
+            gastos: [],
+            gasto:
+            {
+                id: 0,
+
+                concepto: " ",
+                tipoobligacion: " ",
+                monto: " ",
+                estado: ""
+            },
+            fnombres: "",
+            paginacion: 20,
+
+            error: "",
+        },
+        mounted: function () {
+            this.fetchGastos();
+
+        },
+        methods: {
+            fetchGastos: function () {
+                var url = "http://localhost:5039/api/Gastoes";
+                this.$http.get(url).then(function (response) {
+                    this.gastos = response.data;
+
+                });
+            },
+
+
+
+            buscar: function () {
+                this.fetchGastos();
+
+            },
+
+            nuevo: function () {
+                this.gasto.id = 0,
+
+                this.gasto.concepto = "";
+                this.gasto.tipoobligacion = "";
+                this.gasto.monto = "";
+                this.gasto.estado = 1;
+
+                $('#mdlGasto').modal('show');
+            },
+            registrar: function () {
+                var url = "http://localhost:5039/api/Gastoes";
+                this.$http.post(url, this.gasto).then(function (response) {
+                    this.fetchGastos();
+                    $('#mdlGasto').modal('hide');
+                });
+            },
+            editar: function (id) {
+                var url = "http://localhost:5039/api/Gastoes/" + id;
+                this.$http.get(url).then(function (response) {
+                    this.gasto = response.data;
+                    $('#mdlGasto').modal('show');
+                });
+            },
+            actualizar: function () {
+                var url = "http://localhost:5039/api/Gastoes/" + this.gasto.id;
+                this.$http.put(url, this.gasto).then(function (response) {
+                    this.fetchGastos();
+                    $('#mdlGasto').modal('hide');
+                });
+            },
+            eliminar: function (id) {
+                var url = "http://localhost:5039/api/Gastoes/" + id;
+                this.$http.delete(url).then(function (response) {
+                    this.fetchGastos();
+
+                });
+            }
+        }
+    })
+
+</script>
